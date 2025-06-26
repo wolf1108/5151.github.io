@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>吃什麼？轉盤抽籤</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #f8f4dc;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    label, select {
+      font-size: 20px;
+    }
+
+    select {
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      position: relative;
+      width: 420px;
+      margin: 40px auto 20px;
+    }
+
+    canvas {
+      border: 10px solid #f39c12;
+      border-radius: 50%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .pointer-arrow {
+      width: 0;
+      height: 0;
+      border-top: 18px solid transparent;
+      border-bottom: 18px solid transparent;
+      border-left: 30px solid #e74c3c;
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translateY(-50%) scaleX(-1);
+      z-index: 10;
+      filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3));
+    }
+
+    button {
+      font-size: 20px;
+      padding: 12px 30px;
+      margin-top: 25px;
+      border: none;
+      border-radius: 10px;
+      background-color: #27ae60;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    button:hover {
+      background-color: #2ecc71;
+    }
+
+    #result {
+      font-size: 26px;
+      margin-top: 35px;
+      font-weight: bold;
+      color: #34495e;
+    }
+  </style>
+</head>
+<body>
+  <h1>吃什麼？🎯 抽籤轉盤</h1>
+
+  <label>選擇餐別：</label>
+  <select id="mealType" onchange="updateWheel()">
+    <option value="lunch">午餐</option>
+    <option value="dinner">晚餐</option>
+  </select>
+
+  <div class="container">
+    <canvas id="wheel" width="400" height="400"></canvas>
+    <div class="pointer-arrow"></div>
+  </div>
+
+  <button onclick="startSpin()">🎲 開始轉盤</button>
+
+  <div id="result">請點擊按鈕開始！</div>
+
+  <script>
+    const meals = {
+      lunch: [
+        "大吉祥", "東昇", "阿財", "7-11", "樂包子", "全家", "阿豪", "減脂餐",
+        "雲彩", "必勝客", "飲料", "五隻豬", "小江南", "早午餐", "丼飯", "麥當勞"
+      ],
+      dinner: [
+        "大吉祥", "東昇", "阿財", "7-11", "樂包子", "全家", "阿豪", "減脂餐",
+        "雲彩", "必勝客", "五隻豬", "小江南", "丼飯", "麥當勞", "滷味", "大腸麵線",
+        "炸的", "頂山門", "蚵仔煎"
+      ]
+    };
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const radius = canvas.width / 2;
+    let currentAngle = 0;
+    let options = meals.lunch;
+
+    function drawWheel() {
+      const num = options.length;
+      const angle = 2 * Math.PI / num;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(radius, radius);
+      ctx.rotate(-currentAngle);
+      ctx.translate(-radius, -radius);
+
+      for (let i = 0; i < num; i++) {
+        const start = i * angle;
+        const end = start + angle;
+
+        ctx.fillStyle = i % 2 === 0 ? "#ffeaa7" : "#fab1a0";
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius - 5, start, end);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(start + angle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#2d3436";
+        ctx.font = "18px Microsoft JhengHei";
+        ctx.fillText(options[i], radius - 20, 10);
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function updateWheel() {
+      const type = document.getElementById("mealType").value;
+      options = meals[type];
+      drawWheel();
+    }
+
+    function startSpin() {
+      const velocity = Math.random() * 8 + 8;
+      const totalRotation = velocity * 2 * Math.PI;
+      const duration = 3000;
+      const start = performance.now();
+      const initialAngle = currentAngle;
+
+      function animate(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const easing = 1 - Math.pow(1 - progress, 3);
+        currentAngle = initialAngle + totalRotation * easing;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const anglePer = 2 * Math.PI / options.length;
+          const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+          const pointerDirection = 0; // 指針朝右
+          const angleFromPointer = (normalizedAngle - pointerDirection + 2 * Math.PI) % (2 * Math.PI);
+          const index = Math.floor(angleFromPointer / anglePer) % options.length;
+
+          document.getElementById("result").innerHTML =
+            `🎉 今天吃：<strong>${options[index]}</strong>`;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    drawWheel();
+  </script>
+</body>
+</html>
