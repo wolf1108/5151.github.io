@@ -1,8 +1,5 @@
 # 吃什麼？轉盤抽籤 (Food Picker Wheel)
 
-
-# 吃什麼？轉盤抽籤 (Food Picker Wheel)
-
 網址: https://wolf1108.github.io/5151.github.io/eat.html
 
 ## 設計原因
